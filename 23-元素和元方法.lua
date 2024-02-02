@@ -3,112 +3,96 @@
 
     元表 metatable
 
-        元表并不是一个普通的表，而是一套自定义的计算规则，用这些规则，可以实现表与表之间的运算
-        而这些规则，都以函数的方式，写在元表中，所以又称为元方法(就是写在元表里面的方法)
+        __index
+            当在一个表中，去取某个key
+                如果该表中有对应的key，就直接返回
+                如果没有
+                    看有没有元表
+                        没有元表，返回nil
+                        有元表
+                            看元表中有没有__index
+                                没有，返回nil
+                                有
+                                    如果__index 是个表,
+                                        并且有key, 返回值
+                                            没有key, 返回nil
 
-        起到一个类似于其它语言中的运算符重载的作用
+                                     如果 __index 是个function
+                                        则直接调用该function ，且表和key 都会作为该function 的参数
 
 
-        setmetatable(table, metatable) -- 将 metatable 设为 table 的元表，其返回值为table
+        __newindex
+            如果是表，则在本表里面设一个没有的key的时候，会写到__newindex 对应的表中,而不会写本表
+                     如果本表中有key,则更新本表，不会管元表
 
+            如果是function,则直接调用，且本表，key,value 都可作参数
 ]]--
 
-t1={11,22,nil,nil,nil,33};
-t2={111,222,333,444,555};
-metatT3={};
 
-setmetatable(t1,metatT3);
-setmetatable(t2,metatT3);
+t1={id=123,name="tom"};
 
-metatT3.__add=function(t1,t2)
-    local rs={};
+t2={};
+meta={
+    --__newindex=t2;
 
-    local len1=#t1;
-    local len2=#t2;
-
-    if len1 > len2 then
-        len2=len1;
+    __newindex=function(t,k,v)
+        --print(tostring(t).." 被写入 "..k.." : "..v);
+        --t[k]=v; --stack overflow 死递归，爆栈了
+        rawset(t,k,v);--调用原生方法，不调用重载的方法
     end
 
-    for i=1,len2 do
-        local a=t1[i] or 0;
-        local b=t2[i] or 0;
-        rs[i]=a+b;
-    end
-    return rs;
-end
+};
 
-metatT3["__eq"]=function(t1,t2)
+setmetatable(t1,meta);
 
-    if #t1 ~= #t2 then
-        return false;
-    end
+--print(t1.phone);
+t1["phone"]="t1-phone";--当有__newindex 的时候，就写到对应的__newindex 的表中去了
+print(t1.phone);
 
-    for i=1,#t1 do
-        if t1[i] ~= t2[i] then
-            return false;
-        end
-    end
+print(t2.phone);
 
-    return true;
-
-
-end
-
-
-t3=t1+t2;
---print(t3);
-
-for k,v in ipairs(t3) do
-    print(k,v);
-end
-
-t11={1,2,3};
-t22={1,2,3};
-
-
---在lua 中，我们认为nil 是无效的，所以如果nil 在 表的最后，就直接扔掉，
---如果nil 后面有其它非nil 的元素，不得己必须得带着
---print(#t22);
-
-setmetatable(t11,metatT3);
-setmetatable(t22,metatT3);
-
-
-print(t11 == t22);
+--meta.__index=t2;
+--print(t1.phone);
 
 
 --[[
-metatT4={
-    __add=function(t1,t2)
-        local rs={};
+t1={id=123,name="tom"};
+meta={
 
-        local len1=#t1;
-        local len2=#t2;
-
-        if len1 > len2 then
-            len2=len1;
-        end
-
-        for i=1,len2 do
-            local a=t1[i] or "";
-            local b=t2[i] or "";
-            --print(a,b);
-            rs[i]=a..b;
-        end
-        return rs;
+    --__index={phone="index_phone"};
+    __index=function(t,k)
+        --print(t,k);
+        t[k]="new-phone";
+        return "index-phone";
     end
-}
+};
 
-t4={"abc","def","xyz"};
-t5={11,22,33,"ABC"};
-setmetatable(t4,metatT4);
-setmetatable(t5,metatT4);
-t6=t4+t5;
-print("")
-for k,v in ipairs(t6) do
-    print(k,v);
-end
+setmetatable(t1,meta);
+
+
+
+print(t1.phone);--index-hone
+print(t1.phone);--new-hone
+
 ]]--
 
+--[[
+print(t1.phone);--没有key,没有元表 nil
 
+t1.phone="t1_phone";--有key,不管元表，直接返回
+print(t1.phone);
+
+
+setmetatable(t1,meta);--设置元表,但没有__index;
+
+print(t1.phone);--还是取自己的key
+
+meta.__index={phone="index_phone";};  --元表设置__index;
+
+print(t1.phone);--还是自己的key
+
+t1.phone=nil;--把自己的key 去掉，则会去拿元表
+
+print(t1.phone);--
+
+]]--

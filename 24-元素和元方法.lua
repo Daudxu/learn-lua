@@ -3,112 +3,80 @@
 
     元表 metatable
 
-        元表并不是一个普通的表，而是一套自定义的计算规则，用这些规则，可以实现表与表之间的运算
-        而这些规则，都以函数的方式，写在元表中，所以又称为元方法(就是写在元表里面的方法)
+        __tostring  用函数接管本表的返回值 返回一个string
+        __call      把表当类处理，此处类似于类中的构造函数，可传值，本表是第一个参数
 
-        起到一个类似于其它语言中的运算符重载的作用
-
-
-        setmetatable(table, metatable) -- 将 metatable 设为 table 的元表，其返回值为table
+        rawget(table, index)  取本表中的index 索引对应的值，不受元表干扰，没有就返回nil;
+        rawset(table, index, value)  给本表添加元素，不受元表干扰
 
 ]]--
 
-t1={11,22,nil,nil,nil,33};
-t2={111,222,333,444,555};
-metatT3={};
 
-setmetatable(t1,metatT3);
-setmetatable(t2,metatT3);
+t1={id=123,name="tom"};
+meta={};
+setmetatable(t1,meta);
 
-metatT3.__add=function(t1,t2)
-    local rs={};
+--print(t1,t1.phone);
 
-    local len1=#t1;
-    local len2=#t2;
 
-    if len1 > len2 then
-        len2=len1;
+meta.__tostringXX=function(t)
+
+    str="";
+    for k,v in pairs(t) do
+        str = str..k..":"..v.."; ";
     end
 
-    for i=1,len2 do
-        local a=t1[i] or 0;
-        local b=t2[i] or 0;
-        rs[i]=a+b;
-    end
-    return rs;
+    --t["phone"]=123456;
+    --print("这里是 tostring");
+    return str;
 end
 
-metatT3["__eq"]=function(t1,t2)
+--print(t1);
+--print(t1.phone);--在上一句执行完之后，才有phone 字段
 
-    if #t1 ~= #t2 then
-        return false;
-    end
 
-    for i=1,#t1 do
-        if t1[i] ~= t2[i] then
-            return false;
-        end
-    end
-
-    return true;
-
+--类似于构造函数
+meta.__call=function(t,...)
+    --print(t);
+    --print(...);
+    --local t2={...};
+    --for k,v in pairs(t2) do
+    --    print(k,v);
+    --end
 
 end
 
-
-t3=t1+t2;
---print(t3);
-
-for k,v in ipairs(t3) do
-    print(k,v);
-end
-
-t11={1,2,3};
-t22={1,2,3};
+--print("");
+--t1(1,"a",2,"b");
 
 
---在lua 中，我们认为nil 是无效的，所以如果nil 在 表的最后，就直接扔掉，
---如果nil 后面有其它非nil 的元素，不得己必须得带着
---print(#t22);
-
-setmetatable(t11,metatT3);
-setmetatable(t22,metatT3);
 
 
-print(t11 == t22);
+t2={id=123,name="tom"};
+t3={};
 
+--print(t2.id);
+--print(t2.phone);
+--print("");
+meta2={
+    --__index={phone=123456;}
+    --__index=function(t,k)
+    --    print(t,k);
+    --    return "index func";
+    --end,
+    __newindex=t3
 
---[[
-metatT4={
-    __add=function(t1,t2)
-        local rs={};
+};
+setmetatable(t2,meta2);
+--print(t2.id);
+--print(t2.phone);
+--print("");
+--print(rawget(t2,"id"));
+--print(rawget(t2,"phone"));--取本表值
 
-        local len1=#t1;
-        local len2=#t2;
+print(t2.country);
+t2.country="china";
+--rawset(t2,"country","china");
 
-        if len1 > len2 then
-            len2=len1;
-        end
-
-        for i=1,len2 do
-            local a=t1[i] or "";
-            local b=t2[i] or "";
-            --print(a,b);
-            rs[i]=a..b;
-        end
-        return rs;
-    end
-}
-
-t4={"abc","def","xyz"};
-t5={11,22,33,"ABC"};
-setmetatable(t4,metatT4);
-setmetatable(t5,metatT4);
-t6=t4+t5;
-print("")
-for k,v in ipairs(t6) do
-    print(k,v);
-end
-]]--
-
+print(t2.country,t3.country);
 
