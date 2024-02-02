@@ -16,7 +16,7 @@ t1={id=123,name="tom"};
 meta={};
 setmetatable(t1,meta);
 
---print(t1,t1.phone);
+w--print(t1,t1.phone);
 
 
 meta.__tostringXX=function(t)
