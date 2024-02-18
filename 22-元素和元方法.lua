@@ -112,3 +112,12 @@ end
 ]]--
 
 
+
+
+a1, b1 = {1, 2, 3}, {10, 20}
+setmetatable(a1, b1)  --设置tab的元表为meta_tab
+
+getmetatable(a1)  -- 获取tab的元表
+print(getmetatable(a1))
+-- c1 = a1 + b1
+-- print(c1)      -- 输出的是a的地址
